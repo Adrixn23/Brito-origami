@@ -1,0 +1,1039 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#065f46">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <link rel="manifest" href="manifest.json">
+  <title>¡Haz tu vaso de papel! - Guía Accesible de Origami</title>
+  <style>
+    /* ==========================================================================
+       VARIABLES Y RESET (Cero dependencias, 100% Offline)
+       ========================================================================== */
+    :root {
+      --bg-page: #f8fafc;
+      --card-bg: #ffffff;
+      --text-main: #0f172a;
+      --text-muted: #475569;
+      --primary-green: #065f46;      /* Verde oscuro botón principal y píldoras */
+      --primary-hover: #044e39;
+      --paper-color: #6ee7b7;        /* Verde claro oficial del papel físico */
+      --paper-dark: #34d399;         /* Tonalidad para pliegues y sombras internas */
+      --paper-border: #047857;       /* Contorno nítido de alto contraste */
+      --arrow-color: #ea580c;        /* Naranja direccional de alta visibilidad */
+      --border-soft: #cbd5e1;
+      --segment-inactive: #bbf7d0;
+      --segment-active: #10b981;
+      --focus-ring: #2563eb;
+      --radius-pill: 9999px;
+      --radius-card: 24px;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: #f1f5f9;
+      /* Patrón temático de origami 100% offline (líneas de pliegue punteadas y geometría en verde sutil) */
+      background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%23059669' stroke-width='1.2' stroke-opacity='0.08'%3E%3Cpath d='M0 0 L60 60 M60 0 L0 60' stroke-dasharray='3 3'/%3E%3Cpolygon points='30,0 60,30 30,60 0,30' stroke-dasharray='4 2'/%3E%3Ccircle cx='30' cy='30' r='2' fill='%23059669' fill-opacity='0.1' stroke='none'/%3E%3C/g%3E%3C/svg%3E");
+      background-repeat: repeat;
+      background-attachment: fixed;
+      color: var(--text-main);
+      font-family: 'Quicksand', 'Nunito', 'Comfortaa', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Ubuntu, Cantarell, sans-serif;
+      letter-spacing: -0.01em;
+      font-size: 18px;
+      line-height: 1.5;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 16px;
+      overflow-x: hidden;
+    }
+
+    /* Contenedor mobile-first centrado */
+    .app-container {
+      width: 100%;
+      max-width: 440px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      position: relative;
+    }
+
+    /* ==========================================================================
+       ENCABEZADO Y BARRA DE PROGRESO POR SEGMENTOS
+       ========================================================================== */
+    .app-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 4px 8px;
+    }
+
+    .header-icon {
+      width: 60px;
+      height: 60px;
+      flex-shrink: 0;
+    }
+
+    .header-title {
+      font-size: 1.65rem;
+      font-weight: 800;
+      line-height: 1.15;
+      color: var(--text-main);
+    }
+
+    /* Barra de progreso visual por segmentos (1 a 6) */
+    .progress-segments {
+      display: flex;
+      gap: 6px;
+      width: 100%;
+      padding: 0 4px;
+    }
+
+    .segment {
+      flex: 1;
+      height: 8px;
+      border-radius: var(--radius-pill);
+      background-color: var(--segment-inactive);
+      transition: background-color 0.4s ease, transform 0.3s ease;
+    }
+
+    .segment.active {
+      background-color: var(--segment-active);
+      transform: scaleY(1.15);
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border-width: 0;
+    }
+
+    /* ==========================================================================
+       TARJETA CENTRAL
+       ========================================================================== */
+    .main-card {
+      background: var(--card-bg);
+      border-radius: var(--radius-card);
+      padding: 24px 20px;
+      box-shadow: 0 8px 24px -4px rgba(15, 23, 42, 0.08), 0 2px 6px -1px rgba(15, 23, 42, 0.04);
+      border: 1px solid rgba(226, 232, 240, 0.8);
+      display: flex;
+      flex-direction: column;
+      min-height: 480px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Etiqueta superior tipo píldora */
+    .card-badge {
+      align-self: flex-start;
+      background-color: var(--primary-green);
+      color: #ffffff;
+      font-size: 0.88rem;
+      font-weight: 700;
+      padding: 6px 14px;
+      border-radius: var(--radius-pill);
+      margin-bottom: 16px;
+      letter-spacing: 0.02em;
+    }
+
+    /* Contenido dinámico con animación slideIn */
+    .step-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      flex-grow: 1;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .step-content.slide-animate {
+      animation: slideIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(12px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Ilustraciones de lados de papel (Intro) con flotado al pasar el cursor */
+    .paper-sides-grid {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      width: 100%;
+      margin: 12px 0;
+    }
+
+    .paper-side-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      transition: transform 0.2s ease, filter 0.2s ease;
+    }
+
+    .paper-side-item:hover {
+      transform: translateY(-4px);
+    }
+
+    .paper-square-svg {
+      width: 115px;
+      height: 115px;
+      border-radius: 12px;
+      display: block;
+      transition: filter 0.2s ease;
+    }
+
+    .paper-side-item:hover .paper-square-svg {
+      filter: drop-shadow(0 6px 14px rgba(16, 185, 129, 0.28));
+    }
+
+    .paper-side-caption {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .intro-intro-text {
+      margin: 8px 0 16px;
+    }
+
+    .card-question {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: var(--text-main);
+      margin-bottom: 6px;
+    }
+
+    .card-subtitle {
+      font-size: 1.1rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    /* ==========================================================================
+       DIAGRAMAS SVG MEJORADOS ("Ahora" vs "Así queda")
+       ========================================================================== */
+    .comparison-diagram {
+      width: 100%;
+      max-width: 360px;
+      height: 195px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 2px 0 8px;
+      background: #fafaf9;
+      border-radius: 16px;
+      border: 1px solid #e7e5e4;
+      padding: 6px;
+    }
+
+    .diagram-svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .diagram-svg text {
+      font-family: 'Quicksand', 'Nunito', 'Comfortaa', system-ui, -apple-system, sans-serif;
+      user-select: none;
+    }
+
+    .card-instruction-text {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--text-main);
+      text-align: left;
+      line-height: 1.45;
+      background: #f1f5f9;
+      padding: 14px 16px;
+      border-radius: 14px;
+      width: 100%;
+      border-left: 5px solid var(--primary-green);
+    }
+
+    .feedback-toast {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #047857;
+      background: #ecfdf5;
+      border: 1px solid #a7f3d0;
+      padding: 8px 14px;
+      border-radius: 12px;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    /* ==========================================================================
+       BOTONES DE NAVEGACIÓN (Pills inferiores ergonómicos)
+       ========================================================================== */
+    .nav-actions {
+      display: flex;
+      gap: 12px;
+      width: 100%;
+      margin-top: 4px;
+    }
+
+    .btn {
+      min-height: 52px;
+      font-size: 1.15rem;
+      font-weight: 700;
+      border-radius: var(--radius-pill);
+      padding: 12px 24px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      cursor: pointer;
+      text-decoration: none;
+      border: 2px solid transparent;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      transition: transform 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+    }
+
+    .btn:focus-visible {
+      outline: 3px solid var(--focus-ring);
+      outline-offset: 3px;
+    }
+
+    /* Botón Secundario: Contorno */
+    .btn-secondary {
+      background-color: transparent;
+      color: #059669;
+      border-color: #6ee7b7;
+      flex: 1;
+    }
+
+    .btn-secondary:hover:not(:disabled) {
+      background-color: #ecfdf5;
+      border-color: #059669;
+    }
+
+    .btn-secondary:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      border-color: #cbd5e1;
+      color: #94a3b8;
+    }
+
+    /* Botón Principal: Verde Oscuro con pulso/escalado */
+    .btn-primary {
+      background-color: var(--primary-green);
+      color: #ffffff;
+      flex: 1.4;
+      box-shadow: 0 4px 14px rgba(6, 95, 70, 0.25);
+    }
+
+    .btn-primary:hover {
+      background-color: var(--primary-hover);
+      box-shadow: 0 6px 20px rgba(6, 95, 70, 0.38);
+    }
+
+    .btn-primary:active {
+      transform: scale(0.96);
+    }
+
+    /* Animación de pulso sutil y constante */
+    @keyframes pulse {
+      0% {
+        transform: scale(1);
+      }
+      50% {
+        transform: scale(1.03);
+      }
+      100% {
+        transform: scale(1);
+      }
+    }
+
+    .btn-pulse {
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    .btn-pulse:hover {
+      animation-play-state: paused;
+      transform: scale(1.04);
+    }
+
+    /* ==========================================================================
+       CANVAS DE CONFETI NATIVO (Offline, Cero dependencias)
+       ========================================================================== */
+    #confettiCanvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 1000;
+    }
+
+    /* Accesibilidad: Reducción de movimiento */
+    @media (prefers-reduced-motion: reduce) {
+      *, .btn-pulse, .step-content {
+        animation: none !important;
+        transition: none !important;
+      }
+    }
+
+    @media (max-width: 380px) {
+      body {
+        padding: 10px;
+        font-size: 16px;
+      }
+
+      .app-container {
+        gap: 12px;
+      }
+
+      .app-header {
+        gap: 10px;
+        padding-inline: 2px;
+      }
+
+      .header-icon {
+        width: 52px;
+        height: 52px;
+      }
+
+      .header-title {
+        font-size: 1.35rem;
+      }
+
+      .main-card {
+        padding: 18px 14px;
+        min-height: 0;
+      }
+
+      .paper-sides-grid {
+        gap: 10px;
+      }
+
+      .paper-square-svg {
+        width: min(35vw, 105px);
+        height: auto;
+      }
+
+      .comparison-diagram {
+        height: auto;
+        min-height: 155px;
+        aspect-ratio: 360 / 195;
+      }
+
+      .card-instruction-text {
+        font-size: 1.05rem;
+        padding: 12px;
+      }
+
+      .nav-actions {
+        gap: 8px;
+      }
+
+      .btn {
+        min-height: 50px;
+        padding: 10px 12px;
+        font-size: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Canvas para confeti de celebración en pantalla final -->
+  <canvas id="confettiCanvas" aria-hidden="true"></canvas>
+
+  <main class="app-container" role="main">
+    
+    <!-- ENCABEZADO CON ICONO DE VASO Y TITULO -->
+    <header class="app-header">
+      <div class="header-icon" aria-hidden="true">
+        <!-- SVG del vaso con sorbete fiel al boceto -->
+        <svg viewBox="0 0 80 80" width="100%" height="100%" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Sorbete verde inclinado -->
+          <path d="M48 10 L58 14 L46 42 L38 39 Z" fill="#65a30d" stroke="#365314" stroke-width="2.5" stroke-linejoin="round"/>
+          <path d="M56 13 L66 17 L62 27 L54 23 Z" fill="#84cc16" stroke="#365314" stroke-width="2.5" stroke-linejoin="round"/>
+          <!-- Tapa con crema rosada -->
+          <path d="M22 36 Q 22 18, 40 18 Q 58 18, 58 36 Z" fill="#fda4af" stroke="#9f1239" stroke-width="3"/>
+          <path d="M28 28 Q 40 22, 52 28" stroke="#f43f5e" stroke-width="3" stroke-linecap="round"/>
+          <!-- Vaso verde pastel -->
+          <polygon points="20,36 60,36 53,74 27,74" fill="#6ee7b7" stroke="#065f46" stroke-width="3.2" stroke-linejoin="round"/>
+          <!-- Franja decorativa rosa ondeada -->
+          <path d="M22 48 Q 40 58, 58 48 L 56 58 Q 38 68, 24 58 Z" fill="#fda4af" stroke="#9f1239" stroke-width="2"/>
+        </svg>
+      </div>
+      <h1 class="header-title">¡Haz tu vaso<br>de papel!</h1>
+    </header>
+
+    <!-- BARRA DE PROGRESO POR SEGMENTOS (1 a 6) -->
+    <div class="progress-segments" id="progressSegments" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="6" aria-label="Progreso de plegado">
+      <div class="segment active" data-index="0"></div>
+      <div class="segment" data-index="1"></div>
+      <div class="segment" data-index="2"></div>
+      <div class="segment" data-index="3"></div>
+      <div class="segment" data-index="4"></div>
+      <div class="segment" data-index="5"></div>
+    </div>
+    <span class="sr-only" id="progressLabel" aria-live="polite">Pantalla inicial: Antes de empezar</span>
+
+    <!-- TARJETA CENTRAL -->
+    <section class="main-card" aria-live="polite" id="stepCardContainer">
+      <!-- Badge superior -->
+      <div class="card-badge" id="cardBadge">Antes de empezar</div>
+
+      <!-- Contenido dinámico del paso -->
+      <div class="step-content" id="stepContent">
+        <!-- Inyectado vía JS -->
+      </div>
+    </section>
+
+    <!-- BOTONES DE NAVEGACIÓN PILL -->
+    <nav class="nav-actions" aria-label="Navegación de pasos">
+      <button type="button" class="btn btn-secondary" id="btnPrev" disabled aria-label="Volver al paso anterior">
+        <span aria-hidden="true">&larr;</span> Atrás
+      </button>
+      <button type="button" class="btn btn-primary btn-pulse" id="btnNext" aria-label="Avanzar al siguiente paso">
+        ¡Empezar! <span aria-hidden="true">&rarr;</span>
+      </button>
+    </nav>
+
+  </main>
+
+  <script>
+    /* ==========================================================================
+       DATOS Y MODELO DE PASOS CON DIAGRAMAS SVG DE ALTA PRECISIÓN Y TEXTOS CORREGIDOS
+       ========================================================================== */
+    const stepsData = [
+      // PANTALLA INICIAL (Sin el cuadro azul eliminado)
+      {
+        badge: "Antes de empezar",
+        isIntro: true,
+        htmlContent: `
+          <div class="paper-sides-grid">
+            <div class="paper-side-item">
+              <svg class="paper-square-svg" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Papel lado A verde claro">
+                <rect x="6" y="6" width="88" height="88" rx="12" fill="#6ee7b7" stroke="#047857" stroke-width="4"/>
+                <text x="50" y="56" fill="#064e3b" font-size="16" font-family="system-ui" font-weight="700" text-anchor="middle">lado A</text>
+              </svg>
+              <span class="paper-side-caption">Un lado</span>
+            </div>
+            <div class="paper-side-item">
+              <svg class="paper-square-svg" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Papel lado B verde claro">
+                <rect x="6" y="6" width="88" height="88" rx="12" fill="#6ee7b7" stroke="#047857" stroke-width="4"/>
+                <text x="50" y="56" fill="#064e3b" font-size="16" font-family="system-ui" font-weight="700" text-anchor="middle">lado B</text>
+              </svg>
+              <span class="paper-side-caption">Otro lado</span>
+            </div>
+          </div>
+          <div class="intro-intro-text">
+            <h2 class="card-question">¿Listo para doblar?</h2>
+            <p class="card-subtitle">Necesitas: una hoja cuadrada.</p>
+          </div>
+          <div class="feedback-toast" style="margin-top: auto;">
+            ✨ Todo listo para crear tu vaso de origami
+          </div>
+        `,
+        nextText: "¡Empezar! &rarr;",
+        prevText: "&larr; Atrás"
+      },
+
+      // PASO 1 (Texto corregido)
+      {
+        badge: "Paso 1 de 6",
+        title: "Paso 1",
+        text: "Pon la hoja de frente, como un diamante. Lleva la punta de abajo hasta la punta de arriba. Te queda un triángulo.",
+        feedback: "¡Bien! Ya tienes la base triangular.",
+        svg: `
+          <svg class="diagram-svg" viewBox="0 0 330 170" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <marker id="arr1" markerWidth="6" markerHeight="6" refX="4" refY="3" orient="auto">
+                <polygon points="0 0, 6 3, 0 6" fill="#ea580c"/>
+              </marker>
+            </defs>
+            <!-- AHORA: Diamante con línea punteada y flecha hacia la punta de arriba -->
+            <g transform="translate(10, 8)">
+              <!-- Cuadrado rotado 45 deg (Diamante) centrado en (60, 65) con lado 72 -->
+              <polygon points="60,15 110,65 60,115 10,65" fill="#6ee7b7" stroke="#047857" stroke-width="2.5" stroke-linejoin="round"/>
+              <!-- Línea punteada de pliegue horizontal central -->
+              <line x1="10" y1="65" x2="110" y2="65" stroke="#047857" stroke-width="2.5" stroke-dasharray="4 3"/>
+              <!-- Flecha curva naranja señalando desde la punta de abajo hasta la punta de arriba -->
+              <path d="M 60 115 Q 85 70 63 23" stroke="#ea580c" stroke-width="3.5" fill="none" stroke-linecap="round" marker-end="url(#arr1)"/>
+              <text x="60" y="145" fill="#475569" font-size="13" font-weight="700" text-anchor="middle">Ahora</text>
+            </g>
+
+            <!-- FLECHA DIVISORIA CENTRAL -->
+            <path d="M 148 70 L 176 70" stroke="#ea580c" stroke-width="3.5" stroke-linecap="round" marker-end="url(#arr1)"/>
+
+            <!-- ASÍ QUEDA: Triángulo con punta hacia arriba -->
+            <g transform="translate(200, 8)">
+              <polygon points="60,20 10,95 110,95" fill="#6ee7b7" stroke="#047857" stroke-width="3" stroke-linejoin="round"/>
+              <text x="60" y="145" fill="#047857" font-size="13" font-weight="800" text-anchor="middle">Así queda</text>
+            </g>
+          </svg>
+        `,
+        nextText: "Siguiente &rarr;",
+        prevText: "&larr; Anterior"
+      },
+
+      // PASO 2
+      {
+        badge: "Paso 2 de 6",
+        title: "Paso 2",
+        text: "Lleva la punta derecha hasta el borde izquierdo. El borde de arriba de lo que doblaste tiene que quedar derecho, acostado.",
+        feedback: "¡Excelente! Esa línea recta horizontal es la clave.",
+        svg: `
+          <svg class="diagram-svg" viewBox="0 0 330 170" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <marker id="arr2" markerWidth="6" markerHeight="6" refX="4" refY="3" orient="auto">
+                <polygon points="0 0, 6 3, 0 6" fill="#ea580c"/>
+              </marker>
+            </defs>
+            <!-- AHORA: Triángulo base con línea de pliegue y flecha desde (135,135) hacia (40,75) -->
+            <g transform="translate(10, 5)">
+              <!-- Triángulo base -->
+              <polygon points="10,135 135,135 72.5,25" fill="#6ee7b7" stroke="#047857" stroke-width="2.5" stroke-linejoin="round"/>
+              <!-- Línea punteada de pliegue de la solapa -->
+              <line x1="103.75" y1="135" x2="41.25" y2="80" stroke="#047857" stroke-width="2.2" stroke-dasharray="4 3"/>
+              <!-- Flecha curva naranja desde la punta derecha hacia el borde izquierdo -->
+              <path d="M 135 135 Q 105 60 48 76" stroke="#ea580c" stroke-width="3.5" fill="none" stroke-linecap="round" marker-end="url(#arr2)"/>
+              <text x="72.5" y="155" fill="#475569" font-size="13" font-weight="700" text-anchor="middle">Ahora</text>
+            </g>
+
+            <!-- FLECHA CENTRAL -->
+            <path d="M 152 80 L 178 80" stroke="#ea580c" stroke-width="3.5" stroke-linecap="round" marker-end="url(#arr2)"/>
+
+            <!-- ASÍ QUEDA: Geometría exacta solicitada (viewBox proporcional 200x150 escalado) -->
+            <g transform="translate(180, 5)">
+              <svg viewBox="0 0 200 150" width="140" height="105" xmlns="http://www.w3.org/2000/svg">
+                <!-- Triángulo base -->
+                <polygon points="10,135 190,135 100,15" fill="#6ee7b7" stroke="#047857" stroke-width="3" stroke-linejoin="round"/>
+                <!-- Solapa doblada desde la derecha (esquina derecha 190,135 doblada a la izquierda en 55,75) -->
+                <!-- Borde superior estrictamente horizontal entre (55,75) y (145,75) -->
+                <polygon points="190,135 55,75 145,75" fill="#a7f3d0" stroke="#047857" stroke-width="3" stroke-linejoin="round"/>
+              </svg>
+              <text x="70" y="125" fill="#047857" font-size="13" font-weight="800" text-anchor="middle">Así queda</text>
+            </g>
+          </svg>
+        `,
+        nextText: "Siguiente &rarr;",
+        prevText: "&larr; Anterior"
+      },
+
+      // PASO 3
+      {
+        badge: "Paso 3 de 6",
+        title: "Paso 3",
+        text: "Haz lo mismo con la punta izquierda: llévala hasta el borde derecho.",
+        feedback: "¡Perfecto! Ya se cruzan los dos lados del vaso.",
+        svg: `
+          <svg class="diagram-svg" viewBox="0 0 330 170" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <marker id="arr3" markerWidth="6" markerHeight="6" refX="4" refY="3" orient="auto">
+                <polygon points="0 0, 6 3, 0 6" fill="#ea580c"/>
+              </marker>
+            </defs>
+            <!-- AHORA: Ya doblada la primera solapa, doblando la punta izquierda hacia el borde derecho -->
+            <g transform="translate(10, 8)">
+              <!-- Triángulo base fondo -->
+              <polygon points="15,130 135,130 75,47" fill="#6ee7b7" stroke="#047857" stroke-width="2.2" stroke-linejoin="round"/>
+              <!-- Primera solapa derecha ya doblada -->
+              <polygon points="135,130 45,88 105,88" fill="#6ee7b7" stroke="#047857" stroke-width="2" stroke-linejoin="round"/>
+              <!-- Línea punteada de pliegue izquierda -->
+              <line x1="45" y1="130" x2="105" y2="88" stroke="#047857" stroke-width="2.2" stroke-dasharray="4 3"/>
+              <!-- Flecha curva naranja desde la punta izquierda (15,130) hacia borde derecho (105,88) -->
+              <path d="M 15 130 Q 45 70 96 86" stroke="#ea580c" stroke-width="3.5" fill="none" stroke-linecap="round" marker-end="url(#arr3)"/>
+              <text x="75" y="152" fill="#475569" font-size="13" font-weight="700" text-anchor="middle">Ahora</text>
+            </g>
+
+            <path d="M 152 88 L 178 88" stroke="#ea580c" stroke-width="3.5" stroke-linecap="round" marker-end="url(#arr3)"/>
+
+            <!-- ASÍ QUEDA: Diagrama Paso 3 corregido exacto solicitado -->
+            <g transform="translate(185, 8)">
+              <!-- Triángulo base fondo -->
+              <polygon points="15,130 135,130 75,47" fill="#6ee7b7" stroke="#047857" stroke-width="2.5" stroke-linejoin="round"/>
+              <!-- Primera solapa (derecha a izquierda) -->
+              <polygon points="135,130 45,88 105,88" fill="#6ee7b7" stroke="#047857" stroke-width="2" stroke-linejoin="round"/>
+              <!-- Segunda solapa cruzada (izquierda a derecha) -->
+              <polygon points="15,130 105,88 45,88" fill="#a7f3d0" stroke="#047857" stroke-width="2.8" stroke-linejoin="round"/>
+              <!-- Borde superior perfectamente horizontal continuo -->
+              <line x1="45" y1="88" x2="105" y2="88" stroke="#047857" stroke-width="3.2"/>
+              <text x="75" y="152" fill="#047857" font-size="13" font-weight="800" text-anchor="middle">Así queda</text>
+            </g>
+          </svg>
+        `,
+        nextText: "Siguiente &rarr;",
+        prevText: "&larr; Anterior"
+      },
+
+      // PASO 4
+      {
+        badge: "Paso 4 de 6",
+        title: "Paso 4",
+        text: "Arriba quedan dos puntas sueltas. Dobla la de adelante hacia ti y métela en el bolsillo que se formed.",
+        feedback: "¡Gran trabajo! Esa solapa asegura el vaso.",
+        svg: `
+          <svg class="diagram-svg" viewBox="0 0 330 170" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <marker id="arr4" markerWidth="6" markerHeight="6" refX="4" refY="3" orient="auto">
+                <polygon points="0 0, 6 3, 0 6" fill="#ea580c"/>
+              </marker>
+            </defs>
+            <!-- AHORA: Copa con flecha doblando la solapa superior hacia el bolsillo -->
+            <g transform="translate(10, 8)">
+              <!-- Punta trasera arriba -->
+              <polygon points="75,47 45,88 105,88" fill="#a7f3d0" stroke="#047857" stroke-width="2"/>
+              <!-- Cuerpo trapezoidal cruzado -->
+              <polygon points="45,88 105,88 88,130 62,130" fill="#6ee7b7" stroke="#047857" stroke-width="2.5" stroke-linejoin="round"/>
+              <!-- Línea horizontal de doblez -->
+              <line x1="45" y1="88" x2="105" y2="88" stroke="#047857" stroke-width="2.5" stroke-dasharray="4 3"/>
+              <!-- Flecha curva naranja hacia el bolsillo -->
+              <path d="M 75 49 Q 95 68 75 106" stroke="#ea580c" stroke-width="3.5" fill="none" stroke-linecap="round" marker-end="url(#arr4)"/>
+              <text x="75" y="152" fill="#475569" font-size="13" font-weight="700" text-anchor="middle">Ahora</text>
+            </g>
+
+            <path d="M 152 88 L 178 88" stroke="#ea580c" stroke-width="3.5" stroke-linecap="round" marker-end="url(#arr4)"/>
+
+            <!-- ASÍ QUEDA: Solapa frontal metida dentro del bolsillo -->
+            <g transform="translate(185, 8)">
+              <!-- Punta trasera arriba -->
+              <polygon points="75,47 45,88 105,88" fill="#a7f3d0" stroke="#047857" stroke-width="2"/>
+              <!-- Cuerpo trapezoidal -->
+              <polygon points="45,88 105,88 88,130 62,130" fill="#6ee7b7" stroke="#047857" stroke-width="2.5" stroke-linejoin="round"/>
+              <!-- Solapa frontal metida hacia abajo (bolsillo) -->
+              <polygon points="48,88 102,88 75,116" fill="#34d399" stroke="#047857" stroke-width="2.5" stroke-linejoin="round"/>
+              <text x="75" y="152" fill="#047857" font-size="13" font-weight="800" text-anchor="middle">Así queda</text>
+            </g>
+          </svg>
+        `,
+        nextText: "Siguiente &rarr;",
+        prevText: "&larr; Anterior"
+      },
+
+      // PASO 5
+      {
+        badge: "Paso 5 de 6",
+        title: "Paso 5",
+        text: "Voltea el vaso y dobla la otra punta hacia abajo, pegada al vaso.",
+        feedback: "¡Casi listo! Ya sellaste ambos lados.",
+        svg: `
+          <svg class="diagram-svg" viewBox="0 0 330 170" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <marker id="arr5" markerWidth="6" markerHeight="6" refX="4" refY="3" orient="auto">
+                <polygon points="0 0, 6 3, 0 6" fill="#ea580c"/>
+              </marker>
+              <marker id="arrBlue" markerWidth="6" markerHeight="6" refX="4" refY="3" orient="auto">
+                <polygon points="0 0, 6 3, 0 6" fill="#0284c7"/>
+              </marker>
+            </defs>
+            <!-- AHORA: Volteo del vaso y pliegue de la solapa hacia abajo -->
+            <g transform="translate(10, 8)">
+              <polygon points="75,47 45,88 105,88" fill="#6ee7b7" stroke="#047857" stroke-width="2"/>
+              <polygon points="45,88 105,88 88,130 62,130" fill="#6ee7b7" stroke="#047857" stroke-width="2.5" stroke-linejoin="round"/>
+              <!-- Flecha azul de voltear vaso -->
+              <path d="M 32 110 A 16 16 0 0 1 50 110" stroke="#0284c7" stroke-width="2.8" stroke-dasharray="3 3" fill="none" marker-end="url(#arrBlue)"/>
+              <!-- Flecha naranja recta hacia abajo -->
+              <path d="M 75 49 L 75 96" stroke="#ea580c" stroke-width="3.5" stroke-linecap="round" marker-end="url(#arr5)"/>
+              <text x="75" y="152" fill="#475569" font-size="13" font-weight="700" text-anchor="middle">Ahora</text>
+            </g>
+
+            <path d="M 152 88 L 178 88" stroke="#ea580c" stroke-width="3.5" stroke-linecap="round" marker-end="url(#arr5)"/>
+
+            <!-- ASÍ QUEDA: Ambas puntas dobladas pegadas al vaso -->
+            <g transform="translate(185, 8)">
+              <polygon points="45,88 105,88 88,130 62,130" fill="#6ee7b7" stroke="#047857" stroke-width="3" stroke-linejoin="round"/>
+              <polygon points="48,88 102,88 75,116" fill="#34d399" stroke="#047857" stroke-width="2.5" stroke-linejoin="round"/>
+              <text x="75" y="152" fill="#047857" font-size="13" font-weight="800" text-anchor="middle">Así queda</text>
+            </g>
+          </svg>
+        `,
+        nextText: "Siguiente &rarr;",
+        prevText: "&larr; Anterior"
+      },
+
+      // PASO 6
+      {
+        badge: "Paso 6 de 6",
+        title: "Paso 6",
+        text: "Aprieta los lados para abrirlo.",
+        feedback: "¡Increíble! Has terminado tu vaso con éxito.",
+        svg: `
+          <svg class="diagram-svg" viewBox="0 0 330 170" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <marker id="arr6" markerWidth="6" markerHeight="6" refX="4" refY="3" orient="auto">
+                <polygon points="0 0, 6 3, 0 6" fill="#ea580c"/>
+              </marker>
+            </defs>
+            <!-- AHORA: Presión lateral con flechas opuestas hacia adentro -->
+            <g transform="translate(10, 8)">
+              <polygon points="26,52 94,52 72,95 48,95" fill="#6ee7b7" stroke="#047857" stroke-width="2.5" stroke-linejoin="round"/>
+              <polygon points="32,52 88,52 60,82" fill="#34d399" stroke="#047857" stroke-width="2"/>
+              <!-- Flechas laterales naranjas presionando hacia adentro -->
+              <path d="M 8 70 L 22 70" stroke="#ea580c" stroke-width="3.5" stroke-linecap="round" marker-end="url(#arr6)"/>
+              <path d="M 112 70 L 98 70" stroke="#ea580c" stroke-width="3.5" stroke-linecap="round" marker-end="url(#arr6)"/>
+              <text x="60" y="145" fill="#475569" font-size="13" font-weight="700" text-anchor="middle">Ahora</text>
+            </g>
+
+            <path d="M 148 70 L 176 70" stroke="#ea580c" stroke-width="3.5" stroke-linecap="round" marker-end="url(#arr6)"/>
+
+            <!-- ASÍ QUEDA: Vaso abierto volumétrico -->
+            <g transform="translate(200, 8)">
+              <!-- Boca interior del vaso -->
+              <ellipse cx="60" cy="50" rx="34" ry="14" fill="#047857"/>
+              <!-- Cuerpo abierto -->
+              <polygon points="26,50 48,98 72,98 94,50" fill="#6ee7b7" stroke="#047857" stroke-width="2.8" stroke-linejoin="round"/>
+              <!-- Borde ovalado frontal -->
+              <path d="M 26 50 C 26 62, 94 62, 94 50" stroke="#047857" stroke-width="3" fill="#6ee7b7"/>
+              <text x="60" y="145" fill="#047857" font-size="13" font-weight="800" text-anchor="middle">¡Listo!</text>
+            </g>
+          </svg>
+        `,
+        nextText: "¡Completar! 🎉",
+        prevText: "&larr; Anterior"
+      },
+
+      // PANTALLA FINAL DE CELEBRACIÓN
+      {
+        badge: "¡Completado con éxito!",
+        isCelebration: true,
+        htmlContent: `
+          <div style="padding: 10px 0;">
+            <div style="width: 100px; height: 100px; margin: 0 auto 12px;">
+              <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="50" cy="50" r="46" fill="#ecfdf5" stroke="#10b981" stroke-width="4"/>
+                <polygon points="30,42 70,42 63,82 37,82" fill="#6ee7b7" stroke="#047857" stroke-width="3"/>
+                <path d="M 30 42 C 30 32, 70 32, 70 42 Z" fill="#34d399" stroke="#047857" stroke-width="3"/>
+                <text x="50" y="26" font-size="20" text-anchor="middle">✨</text>
+              </svg>
+            </div>
+            <h2 class="card-question" style="font-size: 1.55rem; color: #065f46; margin-bottom: 8px;">¡Felicidades!</h2>
+            <p class="card-subtitle" style="font-size: 1.15rem; color: #0f172a; font-weight: 600; margin-bottom: 16px;">
+              Has construido tu vaso de papel con origami paso a paso.
+            </p>
+            <div class="feedback-toast" style="font-size: 1.05rem; padding: 12px;">
+              👏 ¡Excelente trabajo manual y de precisión!
+            </div>
+          </div>
+        `,
+        nextText: "Hacer otro vaso 🔄",
+        prevText: "&larr; Ver pasos"
+      }
+    ];
+
+    /* ==========================================================================
+       CONTROLADOR DE ESTADO DE LA INTERFAZ
+       ========================================================================== */
+    let currentStepIndex = 0;
+
+    const dom = {
+      badge: document.getElementById('cardBadge'),
+      content: document.getElementById('stepContent'),
+      segments: document.querySelectorAll('.segment'),
+      progressLabel: document.getElementById('progressLabel'),
+      btnPrev: document.getElementById('btnPrev'),
+      btnNext: document.getElementById('btnNext'),
+      canvas: document.getElementById('confettiCanvas')
+    };
+
+    function renderStep(index) {
+      const step = stepsData[index];
+
+      // Reiniciar y activar la animación de deslizamiento y fade-in suave
+      dom.content.classList.remove('slide-animate');
+      // Forzar reflujo DOM para reiniciar la animación CSS @keyframes slideIn
+      void dom.content.offsetWidth;
+      dom.content.classList.add('slide-animate');
+
+      // Actualizar insignia superior
+      dom.badge.textContent = step.badge;
+
+      // Actualizar contenido de tarjeta
+      if (step.isIntro || step.isCelebration) {
+        dom.content.innerHTML = step.htmlContent;
+      } else {
+        dom.content.innerHTML = `
+          <div class="comparison-diagram" aria-label="Diagrama del ${step.title}">
+            ${step.svg}
+          </div>
+          <p class="card-instruction-text">
+            ${step.text}
+          </p>
+          <div class="feedback-toast" role="status">
+            <span>✨</span> ${step.feedback}
+          </div>
+        `;
+      }
+
+      // Actualizar segmentos de la barra de progreso con transiciones fluidas
+      dom.segments.forEach((seg, i) => {
+        if (index === 0) {
+          // En la intro sólo el primero está encendido o listo
+          seg.classList.toggle('active', i === 0);
+        } else if (step.isCelebration) {
+          // Todos los segmentos activos
+          seg.classList.add('active');
+        } else {
+          // Activos los pasos completados hasta el actual
+          seg.classList.toggle('active', i < index);
+        }
+      });
+
+      // Anunciar progreso para lectores de pantalla
+      const ariaText = index === 0 
+        ? "Pantalla inicial: Antes de empezar" 
+        : (step.isCelebration ? "Completado con éxito todos los pasos" : `Paso ${index} de 6: ${step.text}`);
+      dom.progressLabel.textContent = ariaText;
+
+      // Actualizar botones de navegación
+      dom.btnPrev.disabled = (index === 0);
+      dom.btnPrev.innerHTML = step.prevText;
+      dom.btnNext.innerHTML = step.nextText;
+
+      // Desencadenar confeti deslumbrante al llegar a la pantalla de celebración
+      if (step.isCelebration) {
+        triggerConfetti();
+      }
+    }
+
+    // Eventos de botones
+    dom.btnNext.addEventListener('click', () => {
+      if (currentStepIndex < stepsData.length - 1) {
+        currentStepIndex++;
+      } else {
+        // Reiniciar desde el inicio
+        currentStepIndex = 0;
+      }
+      renderStep(currentStepIndex);
+    });
+
+    dom.btnPrev.addEventListener('click', () => {
+      if (currentStepIndex > 0) {
+        currentStepIndex--;
+        renderStep(currentStepIndex);
+      }
+    });
+
+    // Soporte para navegación con teclado accesible (Flechas izquierda/derecha)
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' && !dom.btnNext.disabled) {
+        dom.btnNext.click();
+      } else if (e.key === 'ArrowLeft' && !dom.btnPrev.disabled) {
+        dom.btnPrev.click();
+      }
+    });
+
+    /* ==========================================================================
+       CONFETI NATIVO CON CANVAS (0 Librerías, 0 CDNs, 100% Offline)
+       ========================================================================== */
+    const ctx = dom.canvas.getContext('2d');
+    let confettiParticles = [];
+    let animationFrameId = null;
+
+    function resizeCanvas() {
+      dom.canvas.width = window.innerWidth;
+      dom.canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    function triggerConfetti() {
+      // Si el usuario prefiere movimiento reducido, omitir animación de partículas
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        return;
+      }
+
+      confettiParticles = [];
+      const colors = ['#10b981', '#34d399', '#6ee7b7', '#f59e0b', '#3b82f6', '#ec4899', '#8b5cf6', '#fbbf24'];
+      const count = 130;
+
+      // Crear ráfaga de confeti multicolor desde el centro con dispersión parabólica
+      for (let i = 0; i < count; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const velocity = Math.random() * 12 + 6;
+        confettiParticles.push({
+          x: window.innerWidth / 2,
+          y: window.innerHeight * 0.42,
+          w: Math.random() * 12 + 6,
+          h: Math.random() * 8 + 4,
+          color: colors[Math.floor(Math.random() * colors.length)],
+          vx: Math.cos(angle) * velocity,
+          vy: Math.sin(angle) * velocity - 7,
+          rotation: Math.random() * 360,
+          rotationSpeed: (Math.random() - 0.5) * 12,
+          gravity: 0.32,
+          opacity: 1
+        });
+      }
+
+      if (animationFrameId) cancelAnimationFrame(animationFrameId);
+      animateConfetti();
+    }
+
+    function animateConfetti() {
+      ctx.clearRect(0, 0, dom.canvas.width, dom.canvas.height);
+
+      let activeCount = 0;
+      confettiParticles.forEach(p => {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += p.gravity;
+        p.rotation += p.rotationSpeed;
+        p.opacity -= 0.007;
+
+        if (p.opacity > 0 && p.y < dom.canvas.height + 50) {
+          activeCount++;
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate((p.rotation * Math.PI) / 180);
+          ctx.globalAlpha = Math.max(0, p.opacity);
+          ctx.fillStyle = p.color;
+          ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+          ctx.restore();
+        }
+      });
+
+      if (activeCount > 0) {
+        animationFrameId = requestAnimationFrame(animateConfetti);
+      } else {
+        ctx.clearRect(0, 0, dom.canvas.width, dom.canvas.height);
+      }
+    }
+
+    // Inicialización al cargar la página
+    renderStep(0);
+
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch((error) => {
+          console.error('No se pudo activar el modo offline:', error);
+        });
+      });
+    }
+  </script>
+</body>
+</html>
